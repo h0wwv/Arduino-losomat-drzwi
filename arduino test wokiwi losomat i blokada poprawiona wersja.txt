@@ -1,0 +1,67 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <time.h> // Potrzebne do wygenerowania losowości z zegara PC
+
+// 
+// MODUŁ: LOSOMAT I BLOKADA DRZWI
+//
+
+// Zmienne globalne (flagi)
+bool flaga_BlokadaDrzwi = false;  
+bool stan_PoLosowaniu = false;    
+
+// Funkcja konfiguracyjna
+void konfigurujLosomat(unsigned int ziarno) {
+    // W czystym C używamy srand() do "rozkręcenia" maszyny losującej
+    srand(ziarno); 
+}
+
+// Główna funkcja losująca
+void sprawdzLosomat() {
+    // rand() losuje dużą liczbę, a "% 2" sprawia, że reszta z dzielenia 
+    // zawsze wyniesie 0 albo 1 (szansa 50/50)
+    int rzutMoneta = rand() % 2; 
+
+    if (rzutMoneta == 0) {
+        flaga_BlokadaDrzwi = false;
+        printf("WYRZUCONO: 0 -> Czysto. Otwieram drzwi (Blokada = FALSE).\n");
+    } else {
+        flaga_BlokadaDrzwi = true;
+        printf("WYRZUCONO: 1 -> PRZESZUKANIE! (Blokada = TRUE).\n");
+    }
+    stan_PoLosowaniu = true; 
+}
+
+// Funkcja resetująca
+void zresetujBlokade() {
+    flaga_BlokadaDrzwi = false;
+    stan_PoLosowaniu = false;
+    printf("-> Ochrona zresetowala blokade.\n");
+}
+
+// 
+// KOD TESTOWY (Symulacja zachowania systemu)
+// 
+int main() {
+    printf("Start testu losomatu w jezyku C...\n");
+    
+    // Na komputerze używamy aktualnego czasu time(NULL) jako ziarna.
+    // UWAGA DLA INTEGRATORA: Kiedy będzie to wgrywał na Arduino, 
+    // w to miejsce będzie musiał podać odczyt z pinu analogowego.
+    konfigurujLosomat(time(NULL));
+
+    // Pętla symulująca 5 podejść do drzwi (zamiast używać nieskończonego loop i delay)
+    for(int i = 1; i <= 5; i++) {
+        printf("\n--- Ktos naciska przycisk wyjscia (Proba %d) ---\n", i);
+        sprawdzLosomat();
+        
+        // Jeśli wylosowano przeszukanie, symulujemy interwencję ochrony
+        if(flaga_BlokadaDrzwi == true) {
+            printf("-> Czekamy na interwencje ochrony...\n");
+            zresetujBlokade();
+        }
+    }
+    
+    return 0;
+}
